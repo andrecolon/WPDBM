@@ -62,11 +62,26 @@ checked the connector registry and only found a "WordPress.com" connector (for W
 hosted sites specifically, not applicable to a self-hosted GoDaddy install), and it isn't
 installed either.
 
-For a self-hosted site like yours, the usual path is a community WordPress REST API MCP server
-authenticated with the Application Password from step 4. That gets added as a **custom
-connector** in your claude.ai account (or your Claude Code MCP config, if you're driving this
-from a local Claude Code install rather than the web). I can't add that connector myself from
-inside this sandboxed session — it's an account-level action on your end.
+For a self-hosted site like yours, the path is a WordPress REST API MCP server (e.g. a plugin
+exposing an endpoint like `/wp-json/<namespace>/mcp/`) authenticated with the Application
+Password from step 4, added as a **custom connector**:
+
+- [ ] Go to **https://claude.ai/customize/connectors** and add a custom connector — name it,
+      point it at the site's MCP endpoint URL, and set the auth header (`Authorization: Basic
+      <base64 of username:password>`, from the Application Password generated in step 4).
+- [ ] **Use HTTPS, not HTTP**, for the endpoint URL. Basic Auth only base64-encodes the
+      credentials (trivially reversible) — over plain HTTP the Application Password travels in
+      cleartext to anything on the network path. If the site/endpoint is only reachable over
+      `http://` right now, fix that before connecting it (GoDaddy sites get HTTPS by default;
+      a temp/staging subdomain may need its own cert or may not support HTTPS yet — check).
+- [ ] Connectors are only read when a **session starts** — after adding it, start a **new**
+      Claude Code session rather than expecting an existing one to pick it up mid-conversation.
+- [ ] This is an account-level action — I can't add the connector or edit its config myself
+      from inside a sandboxed session (editing a local config file like `~/.claude.json` inside
+      this container doesn't do it; that's not how connectors are wired up for cloud sessions).
+- [ ] Treat any Application Password that's ever been pasted into a chat, doc, or ticket as
+      burned — revoke it (`Users → Profile → Application Passwords`) and generate a fresh one
+      once the endpoint is on HTTPS.
 
 Important scope limit to set expectations correctly: a WordPress REST API MCP server can manage
 **posts/pages, media, custom fields, and site settings** — it does **not** give clean control
